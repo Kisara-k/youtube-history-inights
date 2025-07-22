@@ -1,0 +1,14 @@
+# Ignore everything
+*
+
+# Except these files
+!*.py
+!*.xlsx
+!*.md
+
+# Allow directories so Git can recurse into them
+!*/
+
+# Specific cases
+!.gitignore
+!LICENSE
