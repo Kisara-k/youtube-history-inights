@@ -29,7 +29,7 @@ def clean_dataframe(df):
     
     return df
 
-def format_dataframe(df):
+def format_dataframe(df, search=False):
     
     # 1. Replace "//music." with "//www." in title and titleUrl
     df['title'] = df['title'].str.replace('//music.', '//www.', regex=False)
@@ -40,6 +40,8 @@ def format_dataframe(df):
 
     # 3. Remove starting "Watched " from title
     df['title'] = df['title'].str.removeprefix('Watched ')
+    if search:
+        df['title'] = df['title'].str.removeprefix('Searched for ')
 
     # 4. Convert time column to datetime
     df['time'] = pd.to_datetime(df['time'].str.slice(0, 19), format='%Y-%m-%dT%H:%M:%S', errors='coerce') + TIME_OFFSET
@@ -68,7 +70,7 @@ def combine_xlsx_files_to_one(directory, type, output_suffix='joined'):
 
         if type == 'watch-history':
             combined_df = clean_dataframe(combined_df)
-            combined_df =format_dataframe(combined_df)
+        combined_df = format_dataframe(combined_df, search=(type == 'search-history'))
         combined_df.sort_values(by='time', ascending=False, inplace=True)
     
         combined_df.to_excel(output_file, index=False, engine='openpyxl')
