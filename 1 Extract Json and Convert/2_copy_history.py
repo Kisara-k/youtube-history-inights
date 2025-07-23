@@ -39,16 +39,19 @@ def find_history_files(root):
             if filename.endswith('history.json'):
                 yield os.path.join(dirpath, filename)
 
-def copy_files_to_root(files, root):
-    # Failsafe if prefixing is not applied, it will suffix duplicate files with _1, _2, etc.
+def copy_files_to_root(files, root, rename_on_conflict=False):
     for src in files:
         base = os.path.basename(src)
         dst = os.path.join(root, base)
-        count = 1
-        while os.path.exists(dst):
-            name, ext = os.path.splitext(base)
-            dst = os.path.join(root, f"{name}_{count}{ext}")
-            count += 1
+
+        # Failsafe if prefixing is not applied, it will suffix duplicate files with _1, _2, etc.
+        if rename_on_conflict:
+            count = 1
+            while os.path.exists(dst):
+                name, ext = os.path.splitext(base)
+                dst = os.path.join(root, f"{name}_{count}{ext}")
+                count += 1
+        
         shutil.copy2(src, dst)
 
 if __name__ == '__main__':
