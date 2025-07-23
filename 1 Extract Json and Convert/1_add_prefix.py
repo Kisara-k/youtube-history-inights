@@ -44,5 +44,5 @@ def rename_files_with_prefix(base_path):
                         print(f"Renamed: {old_path} -> {new_path}")
 
 if __name__ == "__main__":
-    current_dir = os.getcwd()
-    rename_files_with_prefix(current_dir)
+    root = os.path.dirname(os.path.abspath(__file__))
+    rename_files_with_prefix(root)

@@ -45,24 +45,22 @@ def flatten_json_to_dataframe(json_data):
 
     return df
 
-def convert_json_files_in_current_dir():
-    for filename in os.listdir('.'):
-        if filename.lower().endswith('.json') and os.path.isfile(filename):
+def convert_json_files_in_dir(directory):
+    for filename in os.listdir(directory):
+        if filename.lower().endswith('.json'):
             base_name = os.path.splitext(filename)[0]
             print(f"Processing: {filename}")
 
             try:
-                with open(filename, 'r', encoding='utf-8') as f:
+                with open(os.path.join(directory, filename), 'r', encoding='utf-8') as f:
                     data = json.load(f)
 
                 df = flatten_json_to_dataframe(data)
 
-                # Save as TSV
-                tsv_path = f"{base_name}.tsv"
+                tsv_path = os.path.join(directory, f"{base_name}.tsv")
                 # df.to_csv(tsv_path, sep='\t', index=False)
 
-                # Save as XLSX
-                xlsx_path = f"{base_name}.xlsx"
+                xlsx_path = os.path.join(directory, f"{base_name}.xlsx")
                 df.to_excel(xlsx_path, index=False, engine='openpyxl')
 
                 print(f"Saved: {tsv_path} and {xlsx_path}")
@@ -71,4 +69,5 @@ def convert_json_files_in_current_dir():
                 print(f"Error processing {filename}: {e}")
 
 if __name__ == "__main__":
-    convert_json_files_in_current_dir()
+    root = os.path.dirname(os.path.abspath(__file__))
+    convert_json_files_in_dir(root)
