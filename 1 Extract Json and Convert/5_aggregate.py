@@ -1,14 +1,42 @@
 import os
-from tkinter import X
 import pandas as pd
 
-def clean_and_aggregate(input_dir, file_name):
+def clean_and_aggregate(input_dir, file_name, get_year_counts=True):
+
     input_path = os.path.join(input_dir, file_name)
+    output_path = os.path.join(input_dir, 'watch-history-aggregated.xlsx')
+
     if not os.path.isfile(input_path):
         print(f"File not found: {input_path}")
         return
 
+    # Read the data
     df = pd.read_excel(input_path, engine='openpyxl')
+    
+    # Check if aggregate file exists
+    
+    if os.path.isfile(output_path):
+        # Read existing aggregated data
+        existing_agg = pd.read_excel(output_path, engine='openpyxl')
+        
+        # Get all unique timestamps from existing data
+        existing_times = set()
+        for times in existing_agg['time_list'].apply(eval):
+            existing_times.update(times)
+        
+        # Filter df to only include rows with new timestamps
+        df = df[~df['time'].isin(existing_times)]
+        
+        if len(df) == 0:
+            print("\nNo new entries found to update. Aggregate file remains unchanged.\n")
+            return
+        
+        # Combine with existing data for re-aggregation
+        df = pd.concat([
+            existing_agg.drop(columns=['first_time', 'last_time', 'frequency', 'time_list', 'header'] + 
+                              [col for col in existing_agg.columns if col.isdigit() and len(col) == 2]),
+            df
+        ], ignore_index=True)
 
     # 1. Aggregate by titleUrl
     grouped = df.groupby('titleUrl').agg({
@@ -25,17 +53,16 @@ def clean_and_aggregate(input_dir, file_name):
     grouped.columns = ['titleUrl', 'title', 'first_time', 'last_time', 'frequency', 'time_list', 'header']
 
     # Get the year counts from the original df
-    df['year'] = df['time'].str[2:4]  # extract last 2 digits of year
-    year_counts = df.pivot_table(index='titleUrl', columns='year', values='time', aggfunc='count').fillna(0).astype(int)
-    year_counts.columns = [str(y).zfill(2) for y in year_counts.columns]  # e.g. '21', '22'
+    if get_year_counts:
+        df['year'] = df['time'].str[2:4]  # extract last 2 digits of year
+        year_counts = df.pivot_table(index='titleUrl', columns='year', values='time', aggfunc='count').fillna(0).astype(int)
+        year_counts.columns = [str(y).zfill(2) for y in year_counts.columns]  # e.g. '21', '22'
 
     grouped = grouped.merge(year_counts, on='titleUrl', how='left')
     
     grouped.sort_values(by='first_time', ascending=False, inplace=True)
     
     # Save output
-    # output_path = os.path.splitext(input_path)[0] + '-aggregated.xlsx'
-    output_path = os.path.join(input_dir, 'watch-history-aggregated.xlsx')
     grouped.to_excel(output_path, index=False, engine='openpyxl')
 
     print(f"\nAggregated {len(grouped)} rows into: {output_path}\n")
