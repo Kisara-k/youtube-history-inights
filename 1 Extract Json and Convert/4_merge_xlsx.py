@@ -2,6 +2,9 @@ import os
 import pandas as pd
 from datetime import timedelta
 
+import warnings
+warnings.filterwarnings('ignore', category=pd.errors.SettingWithCopyWarning)
+
 # Time offset (5 hours, 30 minutes)
 # YouTube Timestamps are in +00:00
 TIME_OFFSET = timedelta(hours=5, minutes=30)
@@ -40,8 +43,10 @@ def format_dataframe(df, search=False):
 
     # 3. Remove starting "Watched " from title
     df['title'] = df['title'].str.removeprefix('Watched ')
+
     if search:
         df['title'] = df['title'].str.removeprefix('Searched for ')
+        df.drop(columns=[col for col in ['titleUrl', 'name', 'description'] if col in df.columns], inplace=True)
 
     # 4. Convert time column to datetime
     df['time'] = pd.to_datetime(df['time'].str.slice(0, 19), format='%Y-%m-%dT%H:%M:%S', errors='coerce') + TIME_OFFSET
