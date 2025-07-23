@@ -24,7 +24,7 @@ def clean_dataframe(df):
 
     # 4. Drop 'subtitles' and 'name.1' if both exist and are fully empty
     empty_cols = []
-    for col in ['subtitles', 'name.1']:
+    for col in ['subtitles', 'name.1', 'description']:
         if col in df.columns and df[col].isna().all():
             empty_cols.append(col)
     if empty_cols:
