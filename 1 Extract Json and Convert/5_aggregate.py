@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import ast
 
 def clean_and_aggregate(input_dir, file_name, get_year_counts=True):
 
@@ -19,9 +20,14 @@ def clean_and_aggregate(input_dir, file_name, get_year_counts=True):
         # Read existing aggregated data
         existing_agg = pd.read_excel(output_path, engine='openpyxl')
         
+        # Safely convert string representation of time_list back to set
+        existing_agg['time_list'] = existing_agg['time_list'].apply(
+            lambda x: ast.literal_eval(x) if isinstance(x, str) else x
+        )
+        
         # Get all unique timestamps from existing data
         existing_times = set()
-        for times in existing_agg['time_list'].apply(eval):
+        for times in existing_agg['time_list']:
             existing_times.update(times)
         
         # Filter df to only include rows with new timestamps
@@ -31,12 +37,14 @@ def clean_and_aggregate(input_dir, file_name, get_year_counts=True):
             print("\nNo new entries found to update. Aggregate file remains unchanged.\n")
             return
         
+        # Prepare existing data for merging by exploding time_list
+        existing_data = existing_agg.explode('time_list').rename(columns={'time_list': 'time'})
+        existing_data = existing_data.drop(columns=[
+            'first_time', 'last_time', 'frequency', 'header'
+        ] + [col for col in existing_agg.columns if col.isdigit() and len(col) == 2])
+        
         # Combine with existing data for re-aggregation
-        df = pd.concat([
-            existing_agg.drop(columns=['first_time', 'last_time', 'frequency', 'time_list', 'header'] + 
-                              [col for col in existing_agg.columns if col.isdigit() and len(col) == 2]),
-            df
-        ], ignore_index=True)
+        df = pd.concat([existing_data, df], ignore_index=True)
 
     # 1. Aggregate by titleUrl
     grouped = df.groupby('titleUrl').agg({
