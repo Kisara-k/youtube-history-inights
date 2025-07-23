@@ -3,7 +3,7 @@
 
 # Except these files
 !*.py
-!*.xlsx
+# !*.xlsx
 !*.md
 
 # Allow directories so Git can recurse into them
