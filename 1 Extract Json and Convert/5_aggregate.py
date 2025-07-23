@@ -37,11 +37,14 @@ def clean_and_aggregate(input_dir, file_name, get_year_counts=True):
             print("\nNo new entries found to update. Aggregate file remains unchanged.\n")
             return
         
+        # Create mapping of titleUrl to header from existing aggregate
+        header_mapping = existing_agg.set_index('titleUrl')['header'].to_dict()
+        mask = df['titleUrl'].isin(header_mapping.keys())
+        df.loc[mask, 'header'] = df.loc[mask, 'titleUrl'].map(header_mapping)
+        
         # Prepare existing data for merging by exploding time_list
         existing_data = existing_agg.explode('time_list').rename(columns={'time_list': 'time'})
-        existing_data = existing_data.drop(columns=[
-            'first_time', 'last_time', 'frequency', 'header'
-        ] + [col for col in existing_agg.columns if col.isdigit() and len(col) == 2])
+        existing_data = existing_data[['titleUrl', 'title', 'time', 'header']]  # Keep only necessary columns
         
         # Combine with existing data for re-aggregation
         df = pd.concat([existing_data, df], ignore_index=True)
