@@ -5,6 +5,7 @@ import os
 from datetime import datetime
 from dashboard import show_dashboard  # Assuming dashboard.py exists
 from utils_1 import clean_on_merge
+from utils_2 import aggregate
 
 # Set wide layout
 st.set_page_config(page_title="JSON & Excel Processor", layout="wide")
@@ -53,7 +54,11 @@ def merge_uploaded_files(uploaded_files, output_path):
 
 def placeholder_aggregate(input_path, output_path):
     df = pd.read_excel(input_path)
-    df.to_excel(output_path, index=False)
+    df_agg = None
+    # if os.path.isfile(output_path):
+    #     df_agg = pd.read_excel(output_path)
+    df_agg = aggregate(df, df_agg)
+    df_agg.to_excel(output_path, index=False)
 
 def placeholder_enrich(input_path, output_path):
     df = pd.read_excel(input_path)
